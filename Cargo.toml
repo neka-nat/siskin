@@ -1,0 +1,21 @@
+[package]
+name = "siskin"
+version = "0.1.0"
+authors = ["nekanat <nekanat.stock@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.44"
+bincode = "1.3.3"
+image = "0.23.12"
+num-traits = "0.2.14"
+typenum = "1.13.0"
+ordered-float = "2.0"
+itertools-num = "0.1.3"
+nalgebra = "0.21"
+kd-tree = "0.4.1"
+lzf = "0.3.1"
+kiss3d = "0.29"
+serde = "1.0.136"
