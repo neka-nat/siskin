@@ -291,7 +291,7 @@ where
 {
     pub data: Vec<T>,
     pub width: u32,
-    _marker: PhantomData<fn() -> T>,
+    pub _marker: PhantomData<fn() -> T>,
 }
 
 impl<T> PointCloud<T>
@@ -313,6 +313,9 @@ where
             width: 1,
             _marker: PhantomData,
         }
+    }
+    pub fn len(&self) -> usize {
+        self.data.len()
     }
     pub fn item(&self, index: usize) -> &T {
         &self.data[index]

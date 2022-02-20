@@ -8,6 +8,6 @@ fn main() {
     let colors = vec![Vector3::new(1.0, 0.0, 0.0), Vector3::new(1.0, 0.0, 0.0)];
     let pc = PointCloudXYZRGB::from_point_color_vec(points, colors);
     let mut vis = visualization::Visualizer::new();
-    vis.add_pointcloud(&pc);
+    vis.add_colored_pointcloud(&pc);
     vis.spin()
 }
