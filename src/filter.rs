@@ -17,7 +17,9 @@ where
 {
     pub fn voxel_grid_filter(&self, voxel_size: <T as Point>::Item) -> Result<PointCloud<T>> {
         if self.len() <= 2 {
-            return Err(anyhow::anyhow!("The number of points should be at least two."));
+            return Err(anyhow::anyhow!(
+                "The number of points should be at least two."
+            ));
         }
         let min_bound = self.data[1..]
             .iter()

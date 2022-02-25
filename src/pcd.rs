@@ -1,12 +1,14 @@
 use super::pointcloud::{Point, PointCloud};
 use anyhow::*;
 use core::convert::TryInto;
+use csv::{ReaderBuilder, StringRecord};
 use itertools_num::*;
 use num_traits::NumAssign;
 use serde::Deserialize;
 use std::fmt::Debug;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read};
+use std::str::FromStr;
 
 #[derive(Default, Debug)]
 struct PCDHeader {
@@ -18,6 +20,44 @@ struct PCDHeader {
     width: usize,
     height: usize,
     data: String,
+}
+
+fn get_data_from_record<T>(record: &StringRecord, header: &PCDHeader) -> Result<T>
+where
+    T: Point + Default,
+    <T as Point>::Item: FromStr,
+    <<T as Point>::Item as FromStr>::Err: Send + Debug + Into<Error>,
+{
+    let mut data = T::default();
+    for (i, (field, field_type)) in header
+        .fields
+        .iter()
+        .zip(header.field_type.iter())
+        .enumerate()
+    {
+        if field_type != "F" {
+            continue;
+        }
+        match field.as_str() {
+            "x" => {
+                data.xyz_mut()[0] = record[i]
+                    .parse::<<T as Point>::Item>()
+                    .map_err(|e| anyhow!(e))?
+            }
+            "y" => {
+                data.xyz_mut()[1] = record[i]
+                    .parse::<<T as Point>::Item>()
+                    .map_err(|e| anyhow!(e))?
+            }
+            "z" => {
+                data.xyz_mut()[2] = record[i]
+                    .parse::<<T as Point>::Item>()
+                    .map_err(|e| anyhow!(e))?
+            }
+            &_ => (),
+        }
+    }
+    Ok(data)
 }
 
 fn get_data_from_binary<T>(buf_chunk: &[u8], header: &PCDHeader) -> Result<T>
@@ -55,7 +95,8 @@ where
 pub fn read_pcd<T>(filename: &str) -> Result<PointCloud<T>>
 where
     T: Point + Default + Debug,
-    <T as Point>::Item: NumAssign + Copy + for<'de> Deserialize<'de>,
+    <T as Point>::Item: NumAssign + Copy + FromStr + for<'de> Deserialize<'de>,
+    <<T as Point>::Item as FromStr>::Err: Send + Debug + Into<Error>,
 {
     let mut pointcloud = PointCloud::<T>::new();
     let mut reader = BufReader::new(File::open(filename)?);
@@ -122,7 +163,15 @@ where
         }
     }
     if header.data == "ascii" {
-        return Err(anyhow::anyhow!("Not implemented error."));
+        let buf_str = String::from_utf8_lossy(&buf);
+        let mut reader = ReaderBuilder::new()
+            .delimiter(b' ')
+            .from_reader(buf_str.as_bytes());
+        for result in reader.records() {
+            let record = result?;
+            let data = get_data_from_record(&record, &header)?;
+            pointcloud.add_data(data);
+        }
     } else {
         for buf_chunk in buf.chunks(fsize) {
             let data = get_data_from_binary(buf_chunk, &header)?;
