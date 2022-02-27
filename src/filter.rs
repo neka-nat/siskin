@@ -2,6 +2,7 @@ extern crate nalgebra as na;
 
 use super::pointcloud::{FloatData, Point, PointCloud};
 use anyhow::*;
+use kd_tree::KdPoint;
 use nalgebra::RealField;
 use num::cast::AsPrimitive;
 use num_traits::FromPrimitive;
@@ -45,5 +46,34 @@ where
             width: self.width,
             _marker: PhantomData,
         })
+    }
+}
+
+impl<T> PointCloud<T>
+where
+    T: Point + Default + Copy + Default + KdPoint<Scalar = <T as Point>::Item>,
+    <T as Point>::Item: FloatData + RealField,
+{
+    pub fn remove_radius_outliers(
+        &self,
+        radius: <T as Point>::Item,
+        neighbor_counts: usize,
+    ) -> PointCloud<T> {
+        let kdtree = self.build_kdtree();
+        let filtered_data: Vec<T> = self
+            .data
+            .iter()
+            .filter(|p| {
+                let found = PointCloud::search_radius(&kdtree, p, radius);
+                found.len() > neighbor_counts
+            })
+            .cloned()
+            .collect();
+
+        PointCloud::<T> {
+            data: filtered_data,
+            width: 1,
+            _marker: PhantomData,
+        }
     }
 }
