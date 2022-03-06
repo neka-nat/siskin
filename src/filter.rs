@@ -5,7 +5,7 @@ use anyhow::*;
 use kd_tree::KdPoint;
 use nalgebra::RealField;
 use num::cast::AsPrimitive;
-use num_traits::FromPrimitive;
+use num_traits::{Float, FromPrimitive};
 use std::collections::HashMap;
 use std::iter::Sum;
 use std::marker::PhantomData;
@@ -43,7 +43,7 @@ where
             .collect();
         Ok(PointCloud::<T> {
             data: voxelized_data,
-            width: self.width,
+            width: 1,
             _marker: PhantomData,
         })
     }
@@ -70,6 +70,54 @@ where
             .cloned()
             .collect();
 
+        PointCloud::<T> {
+            data: filtered_data,
+            width: 1,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<T> PointCloud<T>
+where
+    T: Point + Default + Copy + Default + KdPoint<Scalar = <T as Point>::Item>,
+    <T as Point>::Item: FloatData + RealField + Sum,
+{
+    pub fn remove_statistical_outliers(
+        &self,
+        k_neighbors: usize,
+        std_ratio: <T as Point>::Item,
+    ) -> PointCloud<T> {
+        let kdtree = self.build_kdtree();
+        let n_points = <T as Point>::Item::from_usize(self.len()).unwrap();
+        let mean_stds = self.data.iter().map(|d| {
+            let found = PointCloud::search_knn(&kdtree, d, k_neighbors);
+            let n_found = <T as Point>::Item::from_usize(found.len()).unwrap();
+            let mean = found
+                .iter()
+                .map(|f| Float::sqrt(f.squared_distance))
+                .sum::<<T as Point>::Item>()
+                / n_found;
+            let std = found
+                .iter()
+                .map(|f| ((Float::sqrt(f.squared_distance)) - mean).powi(2))
+                .sum::<<T as Point>::Item>()
+                / n_found;
+            (mean, std)
+        });
+        let mean = mean_stds
+            .clone()
+            .map(|(m, _s)| m)
+            .sum::<<T as Point>::Item>()
+            / n_points;
+        let filtered_data = self
+            .data
+            .iter()
+            .zip(mean_stds)
+            .filter(|(_p, (m, s))| m < &(mean + std_ratio * *s))
+            .map(|(p, (_m, _s))| p)
+            .cloned()
+            .collect();
         PointCloud::<T> {
             data: filtered_data,
             width: 1,
