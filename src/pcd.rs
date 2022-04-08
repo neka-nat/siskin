@@ -38,23 +38,11 @@ where
         if field_type != "F" {
             continue;
         }
-        match field.as_str() {
-            "x" => {
-                data.xyz_mut()[0] = record[i]
-                    .parse::<<T as Point>::Item>()
-                    .map_err(|e| anyhow!(e))?
-            }
-            "y" => {
-                data.xyz_mut()[1] = record[i]
-                    .parse::<<T as Point>::Item>()
-                    .map_err(|e| anyhow!(e))?
-            }
-            "z" => {
-                data.xyz_mut()[2] = record[i]
-                    .parse::<<T as Point>::Item>()
-                    .map_err(|e| anyhow!(e))?
-            }
-            &_ => (),
+        let field = data.point_field_mut(field.as_str());
+        if let Ok(field_ok) = field {
+            *field_ok = record[i]
+                .parse::<<T as Point>::Item>()
+                .map_err(|e| anyhow!(e))?;
         }
     }
     Ok(data)
@@ -72,20 +60,9 @@ where
         if field_type != "F" {
             continue;
         }
-        match field.as_str() {
-            "x" => {
-                data.xyz_mut()[0] =
-                    bincode::deserialize(&buf_chunk[i_start..(i_start + item_size)])?
-            }
-            "y" => {
-                data.xyz_mut()[1] =
-                    bincode::deserialize(&buf_chunk[i_start..(i_start + item_size)])?
-            }
-            "z" => {
-                data.xyz_mut()[2] =
-                    bincode::deserialize(&buf_chunk[i_start..(i_start + item_size)])?
-            }
-            &_ => (),
+        let field = data.point_field_mut(field.as_str());
+        if let Ok(field_ok) = field {
+            *field_ok = bincode::deserialize(&buf_chunk[i_start..(i_start + item_size)])?;
         }
         i_start += item_size;
     }

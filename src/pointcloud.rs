@@ -1,4 +1,5 @@
 extern crate nalgebra as na;
+use anyhow::*;
 use nalgebra::base::Scalar;
 use nalgebra::{ClosedAdd, Matrix3, Matrix4, RealField, Vector3, U1, U3};
 use num_traits::{Float, NumAssign, Zero};
@@ -15,18 +16,62 @@ pub trait Point {
     fn from_point(point: Vector3<Self::Item>) -> Self;
     fn xyz(&self) -> &Vector3<Self::Item>;
     fn xyz_mut(&mut self) -> &mut Vector3<Self::Item>;
+    fn point_field(&self, name: &str) -> Result<Self::Item> {
+        match name {
+            "x" => Ok(self.xyz()[0]),
+            "y" => Ok(self.xyz()[1]),
+            "z" => Ok(self.xyz()[2]),
+            &_ => Err(anyhow!(format!("Invalid field name {:?}", name))),
+        }
+    }
+    fn point_field_mut(&mut self, name: &str) -> Result<&mut Self::Item> {
+        match name {
+            "x" => Ok(&mut self.xyz_mut()[0]),
+            "y" => Ok(&mut self.xyz_mut()[1]),
+            "z" => Ok(&mut self.xyz_mut()[2]),
+            &_ => Err(anyhow!(format!("Invalid field name {:?}", name))),
+        }
+    }
 }
 
 pub trait Color {
     type Item: Scalar;
     fn rgb(&self) -> &Vector3<Self::Item>;
     fn rgb_mut(&mut self) -> &mut Vector3<Self::Item>;
+    fn color_field(&self, name: &str) -> Result<&Vector3<Self::Item>> {
+        match name {
+            "rgb" => Ok(self.rgb()),
+            &_ => Err(anyhow!(format!("Invalid field name {:?}", name))),
+        }
+    }
+    fn color_field_mut(&mut self, name: &str) -> Result<&mut Vector3<Self::Item>> {
+        match name {
+            "rgb" => Ok(self.rgb_mut()),
+            &_ => Err(anyhow!(format!("Invalid field name {:?}", name))),
+        }
+    }
 }
 
 pub trait Normal {
     type Item: FloatData;
     fn normal(&self) -> &Vector3<Self::Item>;
     fn normal_mut(&mut self) -> &mut Vector3<Self::Item>;
+    fn normal_field(&self, name: &str) -> Result<Self::Item> {
+        match name {
+            "normal_x" => Ok(self.normal()[0]),
+            "normal_y" => Ok(self.normal()[1]),
+            "normal_z" => Ok(self.normal()[2]),
+            &_ => Err(anyhow!(format!("Invalid field name {:?}", name))),
+        }
+    }
+    fn normal_field_mut(&mut self, name: &str) -> Result<&mut Self::Item> {
+        match name {
+            "normal_x" => Ok(&mut self.normal_mut()[0]),
+            "normal_y" => Ok(&mut self.normal_mut()[1]),
+            "normal_z" => Ok(&mut self.normal_mut()[2]),
+            &_ => Err(anyhow!(format!("Invalid field name {:?}", name))),
+        }
+    }
 }
 
 pub trait PointColor: Point + Color {
