@@ -6,7 +6,7 @@ use num_traits::{Float, NumAssign, Zero};
 use std::any::Any;
 use std::fmt::Debug;
 use std::marker::PhantomData;
-use std::ops::Add;
+use std::ops::{Add, Div};
 
 pub trait FloatData: Float + Debug + Any {}
 impl<T: Float + Debug + Any> FloatData for T {}
@@ -96,7 +96,7 @@ pub trait PointColorNormal: Point + Color + Normal {
     ) -> Self;
 }
 
-#[derive(Default, Debug)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct PointXYZ<T: FloatData> {
     pub point: Vector3<T>,
 }
@@ -124,6 +124,16 @@ where
     type Output = Self;
     fn add(self, other: Self) -> Self::Output {
         Self::from_point(self.xyz() + other.xyz())
+    }
+}
+
+impl<T> Div<T> for PointXYZ<T>
+where
+    T: FloatData + RealField,
+{
+    type Output = Self;
+    fn div(self, other: T) -> Self::Output {
+        Self::from_point(self.xyz() / other)
     }
 }
 

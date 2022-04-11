@@ -13,7 +13,7 @@ use std::ops::{Add, Div};
 
 impl<T> PointCloud<T>
 where
-    T: Point + Default + Add + Copy + Sum + Div<<T as Point>::Item, Output = T>,
+    T: Point + Default + Add<Output = T> + Copy + Div<<T as Point>::Item, Output = T>,
     <T as Point>::Item: FloatData + RealField + FromPrimitive + AsPrimitive<u32>,
 {
     pub fn voxel_grid_filter(&self, voxel_size: <T as Point>::Item) -> Result<PointCloud<T>> {
@@ -38,7 +38,12 @@ where
             .into_iter()
             .map(|(_k, v)| {
                 let n = v.len();
-                v.into_iter().sum::<T>() / <T as Point>::Item::from_usize(n).unwrap()
+                if n == 1 {
+                    v[0]
+                } else {
+                    v[1..].into_iter().fold(v[0], |s, &e| s + e)
+                        / <T as Point>::Item::from_usize(n).unwrap()
+                }
             })
             .collect();
         Ok(PointCloud::<T> {
