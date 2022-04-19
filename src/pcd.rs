@@ -1,9 +1,9 @@
-use super::pointcloud::{Point, PointCloud};
+use super::pointcloud::{FloatData, Point, PointCloud};
 use anyhow::*;
 use core::convert::TryInto;
 use csv::{ReaderBuilder, StringRecord};
 use itertools_num::*;
-use num_traits::NumAssign;
+use num_traits::{Float, NumAssign};
 use serde::Deserialize;
 use std::fmt::Debug;
 use std::fs::File;
@@ -25,7 +25,7 @@ struct PCDHeader {
 fn get_data_from_record<T>(record: &StringRecord, header: &PCDHeader) -> Result<T>
 where
     T: Point + Default,
-    <T as Point>::Item: FromStr,
+    <T as Point>::Item: FloatData + FromStr,
     <<T as Point>::Item as FromStr>::Err: Send + Debug + Into<Error>,
 {
     let mut data = T::default();
@@ -40,9 +40,12 @@ where
         }
         let field = data.point_field_mut(field.as_str());
         if let Ok(field_ok) = field {
-            *field_ok = record[i]
+            let res = record[i]
                 .parse::<<T as Point>::Item>()
                 .map_err(|e| anyhow!(e))?;
+            if !res.is_nan() {
+                *field_ok = res;
+            }
         }
     }
     Ok(data)
@@ -51,7 +54,7 @@ where
 fn get_data_from_binary<T>(buf_chunk: &[u8], header: &PCDHeader) -> Result<T>
 where
     T: Point + Default,
-    <T as Point>::Item: NumAssign + Copy + for<'de> Deserialize<'de>,
+    <T as Point>::Item: FloatData + NumAssign + Copy + for<'de> Deserialize<'de>,
 {
     let mut data = T::default();
     let mut i_start = 0;
@@ -62,7 +65,10 @@ where
         }
         let field = data.point_field_mut(field.as_str());
         if let Ok(field_ok) = field {
-            *field_ok = bincode::deserialize(&buf_chunk[i_start..(i_start + item_size)])?;
+            let res: <T as Point>::Item = bincode::deserialize(&buf_chunk[i_start..(i_start + item_size)])?;
+            if !res.is_nan() {
+                *field_ok = res;
+            }
         }
         i_start += item_size;
     }
