@@ -137,7 +137,7 @@ where
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct PointXYZNormal<T: FloatData, U: FloatData> {
     pub point: Vector3<T>,
     pub normal: Vector3<U>,
@@ -201,7 +201,7 @@ where
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct PointXYZRGB<T: FloatData, U: Scalar> {
     pub point: Vector3<T>,
     pub color: Vector3<U>,
@@ -265,7 +265,7 @@ where
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct PointXYZRGBNormal<T: FloatData, U: Scalar, V: FloatData> {
     pub point: Vector3<T>,
     pub color: Vector3<U>,
@@ -444,4 +444,5 @@ where
 
 pub type PointCloudXYZ<T> = PointCloud<PointXYZ<T>>;
 pub type PointCloudXYZRGB<T> = PointCloud<PointXYZRGB<T, T>>;
+pub type PointCloudXYZNormal<T> = PointCloud<PointXYZNormal<T, T>>;
 pub type PointCloudXYZRGBNormal<T> = PointCloud<PointXYZRGBNormal<T, T, T>>;

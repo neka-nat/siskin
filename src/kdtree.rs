@@ -3,12 +3,23 @@ use kd_tree::{ItemAndDistance, KdPoint, KdTree};
 use num_traits::NumAssign;
 use ordered_float::OrderedFloat;
 use typenum;
-
-use super::pointcloud::{FloatData, Point, PointCloud, PointXYZ};
+use super::pointcloud::{FloatData, Point, PointCloud, PointXYZ, PointXYZNormal};
 
 impl<T> KdPoint for PointXYZ<T>
 where
-    T: FloatData + NumAssign + Ord,
+    T: FloatData + NumAssign,
+{
+    type Scalar = T;
+    type Dim = typenum::U3;
+    fn at(&self, k: usize) -> T {
+        self.point[k]
+    }
+}
+
+impl<T, U> KdPoint for PointXYZNormal<T, U>
+where
+    T: FloatData + NumAssign,
+    U: FloatData,
 {
     type Scalar = T;
     type Dim = typenum::U3;
