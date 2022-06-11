@@ -1,6 +1,6 @@
 use crate::pointcloud::*;
 use image::{ImageBuffer, Luma, RgbImage};
-use nalgebra::{Matrix3, Matrix4, Vector3, U1, U3};
+use nalgebra::{Matrix3, Matrix4, Vector3};
 use num_traits::{FromPrimitive, NumAssign};
 
 type FloatImage = ImageBuffer<Luma<f32>, Vec<f32>>;
@@ -23,8 +23,8 @@ impl RGBDImage {
     {
         let mut pointcloud = PointCloud::<T>::new();
         let n_total = self.depth.width() * self.depth.height();
-        let rot = extrinsic.fixed_slice::<U3, U3>(0, 0);
-        let t = extrinsic.fixed_slice::<U3, U1>(0, 3);
+        let rot = extrinsic.fixed_slice::<3, 3>(0, 0);
+        let t = extrinsic.fixed_slice::<3, 1>(0, 3);
         pointcloud.resize(n_total as usize);
         let mut count = 0;
         for (x, y, pixel) in self.depth.enumerate_pixels() {

@@ -1,7 +1,7 @@
 extern crate nalgebra as na;
 use anyhow::*;
 use nalgebra::base::Scalar;
-use nalgebra::{ClosedAdd, Matrix3, Matrix4, RealField, Vector3, U1, U3};
+use nalgebra::{ClosedAdd, Matrix3, Matrix4, RealField, Vector3};
 use num_traits::{Float, NumAssign, Zero};
 use std::any::Any;
 use std::fmt::Debug;
@@ -386,8 +386,8 @@ where
         self.data.push(element);
     }
     pub fn transform(&self, trans: &Matrix4<<T as Point>::Item>) -> PointCloud<T> {
-        let rot = trans.fixed_slice::<U3, U3>(0, 0);
-        let t = trans.fixed_slice::<U3, U1>(0, 3);
+        let rot = trans.fixed_slice::<3, 3>(0, 0);
+        let t = trans.fixed_slice::<3, 1>(0, 3);
         let mut transformed_pc = PointCloud::<T>::new();
         transformed_pc.data = self
             .data
